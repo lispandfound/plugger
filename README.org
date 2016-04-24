@@ -1,0 +1,246 @@
+#+TITLE: Plugger
+
+Plugger, a Common Lisp plugin system.
+
+* What is it?
+Plugger is a library for incorporating plugins into your Common Lisp programs.
+It works by piggybacking off the popular asdf for defining systems.
+** Features
+- Utilizes asdf for loading systems and their dependencies
+- Provides an interface for plugins to define functions that can be called by
+  the host program
+- Provides an interface for the host to define functions that can be called by
+  plugins
+- Ensures that plugins do not conflict and that any dependencies that require
+  downloads are taken care of via quicklisp
+- Provide hooks for code to be run on the loading, and unloading of a given
+  plugin
+- Provides ability to define and fire off hooks from the host program
+* Quickstart
+** Installing
+To install is fairly trivial, for the time being clone the project into the
+local project folder used by quicklisp (by default this is
+~/quicklisp/local-projects/).
+Then simply call:
+#+BEGIN_SRC common-lisp
+  (ql:quickload :plugger)
+#+END_SRC
+** Examples
+*** Plugin Writers
+To start with you'll need to locate the directory in which the plugins reside. this is
+defined by the host and should be documented. An example might be plugins.
+
+- foobar
+  - foo.lisp
+  - bar.lisp
+  - plugins
+    - plugin
+      - plugin.asd
+      - package.lisp
+      - plugin.lisp
+
+Each plugin occupies a folder, and contains one .asd file that defines the
+plugins and interfaces (you'll be familiar with this as it is just asdf).
+
+plugin.asd
+#+BEGIN_SRC common-lisp
+  (asdf:defsystem #:pluginname
+    :description "A plugin for a program"
+    :author "me"
+    :license "Some License"
+    :serial t
+    :components ((:file "plugin")))
+#+END_SRC
+
+In order to actually use plugger you need to use two packages. these packages
+are =:plugger-user= and =:host-system-name-user= where =host-system-name= refers
+to the name of the host program (e.g my-super-cool-program-user).
+
+package.lisp
+#+BEGIN_SRC common-lisp
+  (defpackage my-package
+    (:use :cl :plugger-user :host-system-name-user))
+#+END_SRC
+
+As the plugins are simple asdf systems, you can make a plugin as big or complex
+as you want. However a few functions/macros should be of help to you if you want
+a program to be available to the user. Each of these macros are located under
+the =:plugger-user= package.
+
+- =(defplugfun name (args) body)=
+  This is a wrapper around =defun= that automatically includes the function
+  within a package available to the host system to use
+- =(defplugvar name value)=
+  Identical to =defplugfun= except defines a parameter to be used by the host
+  program rather than a function
+- =(defplugmac name (args) body)=
+  Identical to =defplugfun=, except it defines a macro
+- =(with-plug-hook hook-name hook-to-connect-to (args) body)=
+  A similar wrapper to =defplugfun= however this one runs on a hook defined by
+  the host program e.g. when a user reload a page in a web server. =args= in
+  this instance refers to the arguments passed by the host program to the
+  plugin, such as the referral link from someone visiting your page in the case
+  of a page load hook
+- =(deregister-hook hook-name)=
+  Stops a hook from running
+
+Additionally, exported symbols and functions from the host program may be found
+under =:host-system-name-user= or at the host program's discretion another package name.
+*** Host program
+Plugger attempts to make the host program's job to define a plugin as simple as
+possible. In order to do this, you'll ideally need only touch a few macros for
+most use cases in order to have a fully functioning plugin system. For example
+imagine a project like foobar.
+
+- foobar
+  - foo.lisp
+  - bar.lisp
+  - plugins
+    - plugin
+      - plugin.asd
+      - package.lisp
+      - plugin.lisp
+
+In order to load the plugins in foobar, you can use the =load-plugins= function.
+
+load-plugins:
+#+BEGIN_SRC common-lisp
+  (load-plugins directory &key included-plugins excluded-plugins load-order-test die-on-error plugin-namespace)
+#+END_SRC
+
+In our case, =load-plugins= can be used rather trivially:
+#+BEGIN_SRC common-lisp
+  (load-plugins "plugins")
+#+END_SRC
+That's it! However suppose you had a directory of plugins, and some needed to be
+loaded before others for some reason, well that can be achieved too. Use
+=load-order-test= to sort the plugins into an order to be loaded.
+
+E.g to load in alphabetical order:
+#+BEGIN_SRC common-lisp
+  (load-plugins "plugins" :load-order-test #'string-lessp)
+#+END_SRC
+Of course, for anything more complicated, asdf's system should be
+sufficient in dealing with conflicts (i.e requiring a plugin to be loaded
+through the =:depends-on= keyword in =defsystem=. =:load-order-test= is merely a
+lightweight way of defining a standard for plugins to follow if they wish to be
+loaded first.
+
+The =included-plugins= and =excluded-plugins= arguments work as expected,
+blacklisting and whitelisting plugins respectively.
+
+Upon completion, =load-plugins= returns the number of plugins loaded and the
+individual success rate of all the plugins available for loading.
+
+For instance, if the plugin =plugin= loads properly, the output would look like
+so
+#+BEGIN_SRC common-lisp
+  12
+  (("plugin" . success))
+#+END_SRC
+
+Or if it failed
+
+#+BEGIN_SRC common-lisp
+  0
+  (("plugin" . error))
+#+END_SRC
+
+Alternatively, by passing =:die-on-error= to =load-plugins=, if any error occurs
+while loading a plugin the host program (that's you!) will die as well.
+
+Each plugin's symbols and functions it defines for you are found in
+=host-system-name-plugin=, or any other package's namespace by passing a value
+to =plugin-namespace=.
+#+BEGIN_SRC common-lisp
+  (load-plugins "plugins" :plugin-namespace :foobar-plugins)
+#+END_SRC
+
+You can also unload plugins with =unload-plugins=.
+#+BEGIN_SRC common-lisp
+  (unload-plugins &key included-plugins excluded-plugins die-on-error emergency-unload)
+#+END_SRC
+=unload-plugins= unloads all plugins, unless blacklisted by =excluded-plugins=
+or only the plugins whitelisted by =included-plugins=. =die-on-error= will kill
+the host program if the any plugin experiences a problem running it's unload
+hook. Finally =emergency-unload= is a last resort, which skips all unload hooks,
+this shouldn't be used lightly as some plugins might have files or other threads
+running that they need to delete/stop before closing properly.
+Here are some example outputs
+#+BEGIN_SRC common-lisp
+  1
+  (("plugin" . success))
+#+END_SRC
+#+BEGIN_SRC common-lisp
+  0
+  (("plugin" . error))
+#+END_SRC
+**** Hooks
+Hooks (or as can be used interchangeably signals) are a useful way of allowing a
+plugin to work it's magic. Hooks can be defined by the host, for all plugins to
+connect to. Hooks are activated during certain events in your code, as defined
+by you. There are two universal hooks defined by plugger itself, loading and
+unloading. Apart from those however, you can do whatever you wish. To define a
+hook for a plugin to hook into, use =defplughook=.
+#+BEGIN_SRC common-lisp
+  (defplughook hook-name)
+#+END_SRC
+An example may include:
+#+BEGIN_SRC common-lisp
+  (defplughook :on-error)
+#+END_SRC
+=defplughook= works by adding the hook to a global table of hooks and their
+associated functions =*plugger-hooks*=. In fact you can inspect at any time,
+it'll look something like the following:
+#+BEGIN_SRC common-lisp
+  ((:on-error . (func-1 func-2)))
+#+END_SRC
+However for readability enthusiasts, the following functions are defined to help
+make code clearer. They're nothing special, simply wrappers around =assoc= etc.
+#+BEGIN_SRC common-lisp
+  (get-functions-for-hook hook)
+#+END_SRC
+#+BEGIN_SRC common-lisp
+  (get-hook-for-function function)
+#+END_SRC
+Of course, hooks aren't useful if you can't use them, you can trigger a hook
+using the =trigger-hook= function.
+#+BEGIN_SRC common-lisp
+(trigger-hook hook &key excludes-functions includes-functions die-on-error)
+#+END_SRC
+After running =trigger-hook=, all hooks related to the hook you trigger will be
+run. Similar to =load-plugin=, =trigger-hook= returns the number of functions
+that ran successfully and a more in depth list of all the functions run with
+their respective statuses.
+#+BEGIN_SRC common-lisp
+  1
+  ((func-1 . success)
+   (func-2 . error))
+#+END_SRC
+You can remove a hook or list of hooks entirely with =remove-hook=
+#+BEGIN_SRC common-lisp
+  (remove-hook &rest hooks)
+#+END_SRC
+#+BEGIN_SRC common-lisp
+  (remove-hook hook)
+#+END_SRC
+You can also remove a single function or list of functions within a hook using
+=remove-hook-func=
+#+BEGIN_SRC common-lisp
+  (remove-hook-func hook &rest funcs)
+#+END_SRC
+#+BEGIN_SRC common-lisp
+  (remove-hook-func :on-error 'func-1 'func-2)
+#+END_SRC
+**** API exposure
+As the host plugin, you're most likely going to want to expose a list of
+functions plugins can use to interface with your program. Plugger makes it easy
+to do that with =defapifun=, =defapimac= and =defapivar=.
+- =(defapifun name (args) body)=
+  Defines an api function, that is added to the =host-system-name= package.
+- =(defapivar name value)=
+  Defines an api variable, that is added to =host-system-name= package.
+- =(defapimac name (args) body)=
+  Defines an api macro, that is added to =host-system-name= package.
+You can of course set your own package to define api functions to by setting
+=*api-namespace*= variable.
