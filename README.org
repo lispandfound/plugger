@@ -135,7 +135,7 @@ individual success rate of all the plugins available for loading.
 For instance, if the plugin =plugin= loads properly, the output would look like
 so
 #+BEGIN_SRC common-lisp
-  12
+  1
   (("plugin" . success))
 #+END_SRC
 
