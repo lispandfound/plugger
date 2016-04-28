@@ -1,19 +1,31 @@
 (in-package #:plugger-test)
-(define-test load-plugins
+
+(define-test included-plugins-test
   (multiple-value-bind (success loaded) (load-plugins "test_plugins/load" :included-plugins nil)
-    (assert-equal success 0)
-    (assert-equal loaded nil))
-  (multiple-value-bind (success loaded) (load-plugins "test_plugins/load")
-    (assert-equal success 1)
-    (assert-equal loaded '(("plugin" . success))))
+    (reset-plugins)
+    (assert-equal 0 success)
+    (assert-equal nil loaded)))
+(define-test excluded-plugins-test
   (multiple-value-bind (success loaded) (load-plugins "test_plugins/load" :excluded-plugins '("plugin"))
-    (assert-equal success 0)
-    (assert-equal loaded nil))
+    (reset-plugins)
+    (assert-equal 0 success )
+    (assert-equal nil loaded )))
+(define-test basic-load-test
+  (multiple-value-bind (success loaded) (load-plugins "test_plugins/load")
+    (reset-plugins)
+    (assert-equal 1 success )
+    (assert-equal '(("plugin" . :success)) loaded ) ))
+(define-test error-test
   (multiple-value-bind (success loaded) (load-plugins "test_plugins/load-failure")
-    (assert-equal success 0)
-    (assert-equal loaded '(("plugin" . error))))
-  (multiple-value-bind (success loaded) (load-plugins "test_plugins/load-order" :load-order-test #'string<)
-    (assert success 2)
-    (assert-equal loaded '(("a" . success)
-                           ("b" . success))))
-  (assert-error 'error (load-plugins "test_plugins/load-failure" :die-on-error)))
+    (reset-plugins)
+    (assert-equal 0 success)
+    (assert-equal '(("plugin" . :error)) loaded )))
+(define-test load-order-test
+  (multiple-value-bind (success loaded) (load-plugins "test_plugins/load-order" :load-order-test #'string>)
+    (reset-plugins)
+    (assert-equal 2 success )
+    (assert-equal '(("b" . :success)
+                    ("a" . :success)) loaded )))
+(define-test error-test-and-die
+  (reset-plugins)
+  (assert-error 'error (load-plugins "test_plugins/load-failure" :die-on-error t)))
