@@ -26,6 +26,8 @@
     (assert-equal 2 success )
     (assert-equal '(("b" . :success)
                     ("a" . :success)) loaded )))
+(define-test plugin-import-test
+  (load-plugins "test_plugins/import-test" :die-on-error t))
 (define-test error-test-and-die
   (reset-plugins)
   (assert-error 'error (load-plugins "test_plugins/load-failure" :die-on-error t)))
