@@ -23,3 +23,22 @@
                                             (:no-error (&rest vars) (declare (ignore vars)) (cons system :success)))))))
                                   (sort (cl-fad:list-directory dir) load-order-test :key #'system-for-directory))))
       (values (length (remove-if (lambda (pl) (or (eql (cdr pl) :error) (null pl)) ) loaded-plugins)) (remove-if #'null loaded-plugins)))))
+(defmacro defplugfun (name args &body body)
+  `(progn
+     (defun ,name ,args
+       ,@body)
+     (shadowing-import ',name :plugger-user)
+     (export ',name :plugger-user)))
+
+(defmacro defplugmac (name args &body body)
+  `(progn
+     (defmacro ,name ,args
+       ,@body)
+     (shadowing-import ',name :plugger-user)
+     (export ',name :plugger-user)))
+
+(defmacro defplugvar (name value)
+  `(progn
+     (defparameter ,name ,value)
+     (shadowing-import ',name :plugger-user)
+     (export ',name :plugger-user)))
