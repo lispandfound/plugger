@@ -42,6 +42,12 @@
   (multiple-value-bind (success results) (trigger-hook :test ())
     (assert-equal success 1)
     (assert-equal results '((test :success (0))))))
+(define-test plugin-hook-removal-test
+  (setq *plugger-hooks* nil)
+  (defplughook :test)
+  (with-plug-hook 'test :test (lambda () 0))
+  (remove-hook :test)
+  (assert-equal *plugger-hooks* '()))
 (define-test plugin-import-test
   (reset-plugins)
   (load-plugins "./test_plugins/import-test" :die-on-error t))
