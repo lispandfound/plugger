@@ -57,3 +57,5 @@
 (defun remove-hook (&rest hooks)
   (setf *plugger-hooks* (reduce (lambda (acc hook-name)
                                   (remove-if (lambda (hook) (eql hook hook-name)) acc :key #'car)) hooks :initial-value *plugger-hooks*)))
+(defun functions-for-hook (hook-name)
+  (cdr (assoc hook-name *plugger-hooks*)))
