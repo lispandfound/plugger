@@ -1,13 +1,14 @@
 ;;;; plugger.lisp
 
 (in-package #:plugger)
-
+(defparameter *plugin-package* :plugger-plugins)
 (defun reset-plugins ()
   (setf asdf:*central-registry* '(#P"/home/jake/quicklisp/quicklisp/")))
 ;;; "plugger" goes here. Hacks and glory await!
 (defun system-for-directory (directory)
   (car (last (pathname-directory directory))))
-(defun load-plugins (directory &key (included-plugins 'all) excluded-plugins (load-order-test #'string<) die-on-error)
+(defun load-plugins (directory &key (included-plugins 'all) excluded-plugins (load-order-test #'string<) die-on-error (plugger-namespace :plugger-plugins))
+  (setf *plugin-package* plugger-namespace)
   (let ((dir (pathname directory)))
     (let ((loaded-plugins (mapcar (lambda (path)
                                     (when (cl-fad:directory-pathname-p path)
@@ -26,18 +27,18 @@
   `(progn
      (defun ,name ,args
        ,@body)
-     (shadowing-import ',name :plugger-user)
-     (export ',name :plugger-user)))
+     (shadowing-import ',name ,*plugin-package*)
+     (export ',name ,*plugin-package*)))
 
 (defmacro defplugmac (name args &body body)
   `(progn
      (defmacro ,name ,args
        ,@body)
-     (shadowing-import ',name :plugger-user)
-     (export ',name :plugger-user)))
+     (shadowing-import ',name ,*plugin-package*)
+     (export ',name ,*plugin-package*)))
 
 (defmacro defplugvar (name value)
   `(progn
      (defparameter ,name ,value)
-     (shadowing-import ',name :plugger-user)
-     (export ',name :plugger-user)))
+     (shadowing-import ',name ,*plugin-package*)
+     (export ',name ,*plugin-package*)))
