@@ -75,7 +75,7 @@ the =:plugger-plugins= package.
   program rather than a function
 - =(defplugmac name (args) body)=
   Identical to =defplugfun=, except it defines a macro
-- =(with-plug-hook hook-name hook-to-connect-to (args) body)=
+- =(with-plug-hook callback-name hook-to-connect-to function)=
   A similar wrapper to =defplugfun= however this one runs on a hook defined by
   the host program e.g. when a user reload a page in a web server. =args= in
   this instance refers to the arguments passed by the host program to the
@@ -206,16 +206,16 @@ make code clearer. They're nothing special, simply wrappers around =assoc= etc.
 Of course, hooks aren't useful if you can't use them, you can trigger a hook
 using the =trigger-hook= function.
 #+BEGIN_SRC common-lisp
-(trigger-hook hook &key excludes-functions includes-functions die-on-error)
+(trigger-hook hook args &key excludes-functions includes-functions die-on-error)
 #+END_SRC
 After running =trigger-hook=, all hooks related to the hook you trigger will be
 run. Similar to =load-plugin=, =trigger-hook= returns the number of functions
 that ran successfully and a more in depth list of all the functions run with
-their respective statuses.
+their respective statuses, as well as any return values.
 #+BEGIN_SRC common-lisp
   1
-  ((func-1 . success)
-   (func-2 . error))
+  ((func-1 success 1)
+   (func-2 error nil))
 #+END_SRC
 You can remove a hook or list of hooks entirely with =remove-hook=
 #+BEGIN_SRC common-lisp
