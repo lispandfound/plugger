@@ -54,3 +54,6 @@
                                         (error (&rest vars) (declare (ignore vars)) (list (car r) :error nil))
                                         (:no-error (&rest return-values) (list (car r) :success return-values)))) (cdr (assoc ,hook-name *plugger-hooks*)))))
      (values (length (remove-if (lambda (k) (eql k :error)) results :key #'cadr)) results)))
+(defun remove-hook (&rest hooks)
+  (setf *plugger-hooks* (reduce (lambda (acc hook-name)
+                                  (remove-if (lambda (hook) (eql hook hook-name)) acc :key #'car)) hooks :initial-value *plugger-hooks*)))

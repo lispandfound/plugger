@@ -2,7 +2,7 @@
 
 (defpackage #:plugger
   (:use #:cl #:cl-fad)
-  (:export load-plugins reset-plugins defplugfun defplugmac defplugvar *plugger-hooks* *plugin-package* defplughook with-plug-hook trigger-hook))
+  (:export load-plugins reset-plugins defplugfun defplugmac defplugvar *plugger-hooks* *plugin-package* defplughook with-plug-hook trigger-hook remove-hook))
 
 (defpackage #:plugger-plugins
   (:use #:cl #:plugger #:lisp-unit))
