@@ -54,6 +54,12 @@
   (defun test-hook-function () 0)
   (with-plug-hook 'test :test #'test-hook-function)
   (assert-equal `((test . ,#'test-hook-function)) (functions-for-hook :test)))
+(define-test plugin-hook-for-functions-test
+  (setq *plugger-hooks* nil)
+  (defplughook :test)
+  (defun test-hook-function () 0)
+  (with-plug-hook 'test :test #'test-hook-function)
+  (assert-equal '(:test) (hook-for-function 'test)))
 (define-test plugin-import-test
   (reset-plugins)
   (load-plugins "./test_plugins/import-test" :die-on-error t))
