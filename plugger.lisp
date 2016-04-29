@@ -59,3 +59,5 @@
                                   (remove-if (lambda (hook) (eql hook hook-name)) acc :key #'car)) hooks :initial-value *plugger-hooks*)))
 (defun functions-for-hook (hook-name)
   (cdr (assoc hook-name *plugger-hooks*)))
+(defun hook-for-function (function-name)
+  (mapcar #'car (remove-if (lambda (functions) (null (member function-name functions :key #'car))) *plugger-hooks* :key #'cdr)))
