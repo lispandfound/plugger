@@ -53,19 +53,19 @@ plugin.asd
 #+END_SRC
 
 In order to actually use plugger you need to use two packages. these packages
-are =:plugger-user= and =:host-system-name-user= where =host-system-name= refers
+are =:plugger-plugins= and =:host-system-name-user= where =host-system-name= refers
 to the name of the host program (e.g my-super-cool-program-user).
 
 package.lisp
 #+BEGIN_SRC common-lisp
   (defpackage my-package
-    (:use :cl :plugger-user :host-system-name-user))
+    (:use :cl :plugger-plugins :host-system-name-user))
 #+END_SRC
 
 As the plugins are simple asdf systems, you can make a plugin as big or complex
 as you want. However a few functions/macros should be of help to you if you want
-a program to be available to the user. Each of these macros are located under
-the =:plugger-user= package.
+a plugin to be available to the user. Each of these macros are located under
+the =:plugger-plugins= package.
 
 - =(defplugfun name (args) body)=
   This is a wrapper around =defun= that automatically includes the function
