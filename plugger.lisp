@@ -1,6 +1,7 @@
 ;;;; plugger.lisp
 
 (in-package #:plugger)
+(defparameter *plugger-hooks* nil)
 (defparameter *plugin-package* :plugger-plugins)
 (defun reset-plugins ()
   (setf asdf:*central-registry* '(#P"/home/jake/quicklisp/quicklisp/")))
@@ -42,3 +43,14 @@
      (defparameter ,name ,value)
      (shadowing-import ',name ,*plugin-package*)
      (export ',name ,*plugin-package*)))
+(defun defplughook (hook-name)
+  "Define a plugin hook"
+  (pushnew (list hook-name) *plugger-hooks*))
+
+(defun with-plug-hook (name hook function)
+  (push (cons name function) (cdr (assoc hook *plugger-hooks*))))
+(defmacro trigger-hook (hook-name (&rest args) &key excludes-functions includes-functions die-on-error)
+  `(let ((results (mapcar (lambda (r) (handler-case (funcall (cdr r) ,@args)
+                                        (error (&rest vars) (declare (ignore vars)) (list (car r) :error nil))
+                                        (:no-error (&rest return-values) (list (car r) :success return-values)))) (cdr (assoc ,hook-name *plugger-hooks*)))))
+     (values (length (remove-if (lambda (k) (eql k :error)) results :key #'cadr)) results)))
