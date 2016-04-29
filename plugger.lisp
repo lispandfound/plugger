@@ -8,8 +8,7 @@
 (defun system-for-directory (directory)
   (car (last (pathname-directory directory))))
 (defun load-plugins (directory &key (included-plugins 'all) excluded-plugins (load-order-test #'string<) die-on-error)
-
-  (let ((dir (pathname (format nil "~A~A" (truename #P".") directory))))
+  (let ((dir (pathname directory)))
     (let ((loaded-plugins (mapcar (lambda (path)
                                     (when (cl-fad:directory-pathname-p path)
                                       (when (null (member path asdf:*central-registry* :test #'equal))
