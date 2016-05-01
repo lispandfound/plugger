@@ -81,8 +81,6 @@ the =:plugger-plugins= package.
   this instance refers to the arguments passed by the host program to the
   plugin, such as the referral link from someone visiting your page in the case
   of a page load hook
-- =(deregister-hook hook-name)=
-  Stops a hook from running
 
 Additionally, exported symbols and functions from the host program may be found
 under =:host-system-name-user= or at the host program's discretion another package name.
