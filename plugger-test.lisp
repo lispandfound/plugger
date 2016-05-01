@@ -29,12 +29,20 @@
 (define-test plugin-defhook-test
   (setf *plugger-hooks* nil)
   (assert-equal (defplughook :test) '((:test))))
+(define-test remove-functions-from-hook-test
+  (setf *plugger-hooks* nil)
+  (defplughook :test)
+  (defun rm-hook-test () 0)
+  (with-plug-hook 'test :test #'rm-hook-test)
+  (remove-hook-func :test 'test)
+  (assert-equal '((:test)) *plugger-hooks*)
+  )
 (define-test plugin-with-hook-test
   (setf *plugger-hooks* nil)
   (defplughook :test)
   (defun hook-test () 0)
   (with-plug-hook 'test :test #'hook-test)
-  (assert-equal 2 (length (car *plugger-hooks*))))
+  (assert-equal `((:test (test . ,#'hook-test))) *plugger-hooks*))
 (define-test plugin-hook-test
   (setq *plugger-hooks* nil)
   (defplughook :test)
