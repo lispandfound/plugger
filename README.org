@@ -155,26 +155,7 @@ to =plugin-namespace=.
 #+BEGIN_SRC common-lisp
   (load-plugins "plugins" :plugin-namespace :foobar-plugins)
 #+END_SRC
-
-You can also unload plugins with =unload-plugins=.
-#+BEGIN_SRC common-lisp
-  (unload-plugins &key included-plugins excluded-plugins die-on-error emergency-unload)
-#+END_SRC
-=unload-plugins= unloads all plugins, unless blacklisted by =excluded-plugins=
-or only the plugins whitelisted by =included-plugins=. =die-on-error= will kill
-the host program if the any plugin experiences a problem running it's unload
-hook. Finally =emergency-unload= is a last resort, which skips all unload hooks,
-this shouldn't be used lightly as some plugins might have files or other threads
-running that they need to delete/stop before closing properly.
-Here are some example outputs
-#+BEGIN_SRC common-lisp
-  1
-  (("plugin" . success))
-#+END_SRC
-#+BEGIN_SRC common-lisp
-  0
-  (("plugin" . error))
-#+END_SRC
+For unloading plugins, you may use =trigger-hook= with the hook argument =:unload=. Refer to [[Triggering Hooks]]
 **** Hooks
 Hooks (or as can be used interchangeably signals) are a useful way of allowing a
 plugin to work it's magic. Hooks can be defined by the host, for all plugins to
@@ -203,7 +184,7 @@ make code clearer. They're nothing special, simply wrappers around =assoc= etc.
 #+BEGIN_SRC common-lisp
   (get-hook-for-function function)
 #+END_SRC
-Of course, hooks aren't useful if you can't use them, you can trigger a hook
+<<Triggering Hooks>>Of course, hooks aren't useful if you can't use them, you can trigger a hook
 using the =trigger-hook= function.
 #+BEGIN_SRC common-lisp
 (trigger-hook hook args &key excludes-functions includes-functions die-on-error)
