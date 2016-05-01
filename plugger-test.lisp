@@ -42,6 +42,21 @@
   (multiple-value-bind (success results) (trigger-hook :test ())
     (assert-equal success 1)
     (assert-equal results '((test :success (0))))))
+(define-test plugin-hook-include-test
+  (setq *plugger-hooks* nil)
+  (defplughook :test)
+  (with-plug-hook 'test :test (lambda () 0))
+  (with-plug-hook 'foo :test (lambda () 0))
+  (multiple-value-bind (success results) (trigger-hook :test () :includes-functions '(foo))
+    (assert-equal success 1)
+    (assert-equal results '((foo :success (0))))))
+(define-test plugin-hook-exclude-test
+  (setq *plugger-hooks* nil)
+  (defplughook :test)
+  (with-plug-hook 'test :test (lambda () 0))
+  (multiple-value-bind (success results) (trigger-hook :test () :excludes-functions '(test))
+    (assert-equal success 0)
+    (assert-equal results nil)))
 (define-test plugin-hook-removal-test
   (setq *plugger-hooks* nil)
   (defplughook :test)
