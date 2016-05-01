@@ -155,7 +155,7 @@ to =plugin-namespace=.
 #+BEGIN_SRC common-lisp
   (load-plugins "plugins" :plugin-namespace :foobar-plugins)
 #+END_SRC
-For unloading plugins, you may use =trigger-hook= with the hook argument =:unload=. Refer to [[Triggering Hooks]]
+For unloading plugins, you may use =trigger-hook= with the hook argument =:unload=. Refer to =trigger-hook=
 **** Hooks
 Hooks (or as can be used interchangeably signals) are a useful way of allowing a
 plugin to work it's magic. Hooks can be defined by the host, for all plugins to
@@ -184,7 +184,7 @@ make code clearer. They're nothing special, simply wrappers around =assoc= etc.
 #+BEGIN_SRC common-lisp
   (get-hook-for-function function)
 #+END_SRC
-<<Triggering Hooks>>Of course, hooks aren't useful if you can't use them, you can trigger a hook
+Of course, hooks aren't useful if you can't use them, you can trigger a hook
 using the =trigger-hook= function.
 #+BEGIN_SRC common-lisp
 (trigger-hook hook args &key excludes-functions includes-functions die-on-error)
