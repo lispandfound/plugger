@@ -69,3 +69,5 @@
   (cdr (assoc hook-name *plugger-hooks*)))
 (defun hook-for-function (function-name)
   (mapcar #'car (remove-if (lambda (functions) (null (member function-name functions :key #'car))) *plugger-hooks* :key #'cdr)))
+(defun remove-hook-func (hook-name &rest funcs)
+  (setf (cdr (assoc hook-name *plugger-hooks*)) (remove-if (lambda (func) (member func funcs)) (cdr (assoc hook-name *plugger-hooks*)) :key #'car) ))
