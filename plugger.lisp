@@ -49,10 +49,18 @@
 
 (defun with-plug-hook (name hook function)
   (push (cons name function) (cdr (assoc hook *plugger-hooks*))))
-(defmacro trigger-hook (hook-name (&rest args) &key excludes-functions includes-functions die-on-error)
+(defmacro trigger-hook (hook-name (&rest args) &key (excludes-functions nil) (includes-functions :all) die-on-error)
   `(let ((results (mapcar (lambda (r) (handler-case (funcall (cdr r) ,@args)
                                         (error (&rest vars) (declare (ignore vars)) (list (car r) :error nil))
-                                        (:no-error (&rest return-values) (list (car r) :success return-values)))) (cdr (assoc ,hook-name *plugger-hooks*)))))
+                                        (:no-error (&rest return-values) (list (car r) :success return-values)))) (remove-if
+                                                                                                                   (lambda (function)
+                                                                                                                     (cond
+                                                                                                                       ((null ,includes-functions) t)
+                                                                                                                       ((and (null ,excludes-functions) (equal ,includes-functions :all)) nil)
+                                                                                                                       ((and (not (null ,includes-functions)) (not (equal ,includes-functions :all))) (not (member function ,includes-functions)))
+                                                                                                                       (t (member function ,excludes-functions))
+                                                                                                                       ))
+                                                                                                                   (cdr (assoc ,hook-name *plugger-hooks*)) :key #'car))))
      (values (length (remove-if (lambda (k) (eql k :error)) results :key #'cadr)) results)))
 (defun remove-hook (&rest hooks)
   (setf *plugger-hooks* (reduce (lambda (acc hook-name)
