@@ -51,7 +51,9 @@
   (push (cons name function) (cdr (assoc hook *plugger-hooks*))))
 (defmacro trigger-hook (hook-name (&rest args) &key (excludes-functions nil) (includes-functions :all) die-on-error)
   `(let ((results (mapcar (lambda (r) (handler-case (funcall (cdr r) ,@args)
-                                        (error (&rest vars) (declare (ignore vars)) (list (car r) :error nil))
+                                   (error (&rest vars) (declare (ignore vars)) (if ,die-on-error
+                                                                                   (error 'error :text "Error Occurred" )
+                                                                                   (list (car r) :error nil)))
                                         (:no-error (&rest return-values) (list (car r) :success return-values)))) (remove-if
                                                                                                                    (lambda (function)
                                                                                                                      (cond
