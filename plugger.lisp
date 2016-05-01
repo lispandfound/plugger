@@ -3,6 +3,7 @@
 (in-package #:plugger)
 (defparameter *plugger-hooks* nil)
 (defparameter *plugin-package* :plugger-plugins)
+(defparameter *api-package* :plugger-plugin-user)
 (defun reset-plugins ()
   (setf asdf:*central-registry* '(#P"/home/jake/quicklisp/quicklisp/")))
 ;;; "plugger" goes here. Hacks and glory await!
@@ -49,6 +50,12 @@
   `(defmacro-for-package ,*plugin-package* ,name ,args ,body))
 (defmacro defplugvar (name value)
   `(defvar-for-package ,*plugin-package* ,name ,value))
+(defmacro defapifun (name args &body body)
+  `(defun-for-package ,*api-package* ,name ,args ,body))
+(defmacro defapimac (name args &body body)
+  `(defmacro-for-package ,*plugin-package* ,name ,args ,body))
+(defmacro defapivar (name value)
+  `(defvar-for-package ,*api-package* ,name ,value))
 (defun defplughook (hook-name)
   "Define a plugin hook"
   (pushnew (list hook-name) *plugger-hooks*))
