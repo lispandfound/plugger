@@ -46,8 +46,7 @@
   `(defun-for-package ,*plugin-package* ,name ,args ,body))
 
 (defmacro defplugmac (name args &body body)
-  `(defun-for-package ,*plugin-package* ,name ,args ,body))
-
+  `(defmacro-for-package ,*plugin-package* ,name ,args ,body))
 (defmacro defplugvar (name value)
   `(defvar-for-package ,*plugin-package* ,name ,value))
 (defun defplughook (hook-name)
