@@ -35,8 +35,7 @@
   (defun rm-hook-test () 0)
   (with-plug-hook 'test :test #'rm-hook-test)
   (remove-hook-func :test 'test)
-  (assert-equal '((:test)) *plugger-hooks*)
-  )
+  (assert-equal '((:test)) *plugger-hooks*))
 (define-test plugin-with-hook-test
   (setf *plugger-hooks* nil)
   (defplughook :test)
@@ -89,3 +88,8 @@
 (define-test error-test-and-die
   (reset-plugins)
   (assert-error 'error (load-plugins "./test_plugins/load-failure" :die-on-error t)))
+(define-test hook-test-and-die
+  (setq *plugger-hooks* nil)
+  (defplughook :test)
+  (with-plug-hook 'test :test (lambda (n) (/ 1 n)))
+  (assert-error 'error (trigger-hook :test (0) :die-on-error t)))
