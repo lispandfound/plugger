@@ -222,4 +222,4 @@ to do that with =defapifun=, =defapimac= and =defapivar=.
 - =(defapimac name (args) body)=
   Defines an api macro, that is added to =host-system-name= package.
 You can of course set your own package to define api functions to by setting
-=*api-namespace*= variable.
+=*api-package*= variable.
