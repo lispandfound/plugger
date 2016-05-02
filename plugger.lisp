@@ -9,8 +9,28 @@
 ;;; "plugger" goes here. Hacks and glory await!
 (defun system-for-directory (directory)
   (car (last (pathname-directory directory))))
+(defun defplughook (hook-name)
+  "Define a plugin hook"
+  (pushnew (list hook-name) *plugger-hooks*))
+(defmacro trigger-hook (hook-name (&rest args) &key (excludes-functions nil) (includes-functions :all) die-on-error)
+  `(let ((results (mapcar (lambda (r) (handler-case (funcall (cdr r) ,@args)
+                                   (error (&rest vars) (declare (ignore vars)) (if ,die-on-error
+                                                                                   (error 'error :text "Error Occurred" )
+                                                                                   (list (car r) :error nil)))
+                                        (:no-error (&rest return-values) (list (car r) :success return-values)))) (remove-if
+                                                                                                                   (lambda (function)
+                                                                                                                     (cond
+                                                                                                                       ((null ,includes-functions) t)
+                                                                                                                       ((and (null ,excludes-functions) (equal ,includes-functions :all)) nil)
+                                                                                                                       ((and (not (null ,includes-functions)) (not (equal ,includes-functions :all))) (not (member function ,includes-functions)))
+                                                                                                                       (t (member function ,excludes-functions))
+                                                                                                                       ))
+                                                                                                                   (cdr (assoc ,hook-name *plugger-hooks*)) :key #'car))))
+     (values (length (remove-if (lambda (k) (eql k :error)) results :key #'cadr)) results)))
 (defun load-plugins (directory &key (included-plugins 'all) excluded-plugins (load-order-test #'string<) die-on-error (plugger-namespace :plugger-plugins))
   (setf *plugin-package* plugger-namespace)
+  (defplughook :unload)
+  (defplughook :load)
   (let ((dir (pathname directory)))
     (let ((loaded-plugins (mapcar (lambda (path)
                                     (when (cl-fad:directory-pathname-p path)
@@ -24,7 +44,8 @@
                                                                                             (cons system :error)))
                                             (:no-error (&rest vars) (declare (ignore vars)) (cons system :success)))))))
                                   (sort (cl-fad:list-directory dir) load-order-test :key #'system-for-directory))))
-      (values (length (remove-if (lambda (pl) (or (eql (cdr pl) :error) (null pl)) ) loaded-plugins)) (remove-if #'null loaded-plugins)))))
+
+      (values (length (remove-if (lambda (pl) (or (eql (cdr pl) :error) (null pl)) ) loaded-plugins)) (remove-if #'null loaded-plugins) (trigger-hook :load () :die-on-error die-on-error)))))
 (defmacro shadow-import-export (name package)
   `(progn
      (shadowing-import ',name ,package)
@@ -56,27 +77,11 @@
   `(defmacro-for-package ,*plugin-package* ,name ,args ,body))
 (defmacro defapivar (name value)
   `(defvar-for-package ,*api-package* ,name ,value))
-(defun defplughook (hook-name)
-  "Define a plugin hook"
-  (pushnew (list hook-name) *plugger-hooks*))
+
 
 (defun with-plug-hook (name hook function)
   (push (cons name function) (cdr (assoc hook *plugger-hooks*))))
-(defmacro trigger-hook (hook-name (&rest args) &key (excludes-functions nil) (includes-functions :all) die-on-error)
-  `(let ((results (mapcar (lambda (r) (handler-case (funcall (cdr r) ,@args)
-                                   (error (&rest vars) (declare (ignore vars)) (if ,die-on-error
-                                                                                   (error 'error :text "Error Occurred" )
-                                                                                   (list (car r) :error nil)))
-                                        (:no-error (&rest return-values) (list (car r) :success return-values)))) (remove-if
-                                                                                                                   (lambda (function)
-                                                                                                                     (cond
-                                                                                                                       ((null ,includes-functions) t)
-                                                                                                                       ((and (null ,excludes-functions) (equal ,includes-functions :all)) nil)
-                                                                                                                       ((and (not (null ,includes-functions)) (not (equal ,includes-functions :all))) (not (member function ,includes-functions)))
-                                                                                                                       (t (member function ,excludes-functions))
-                                                                                                                       ))
-                                                                                                                   (cdr (assoc ,hook-name *plugger-hooks*)) :key #'car))))
-     (values (length (remove-if (lambda (k) (eql k :error)) results :key #'cadr)) results)))
+
 (defun remove-hook (&rest hooks)
   (setf *plugger-hooks* (reduce (lambda (acc hook-name)
                                   (remove-if (lambda (hook) (eql hook hook-name)) acc :key #'car)) hooks :initial-value *plugger-hooks*)))
