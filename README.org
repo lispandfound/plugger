@@ -108,7 +108,7 @@ load-plugins:
 
 In our case, =load-plugins= can be used rather trivially:
 #+BEGIN_SRC common-lisp
-  (load-plugins "plugins")
+  (load-plugins "./plugins")
 #+END_SRC
 That's it! However suppose you had a directory of plugins, and some needed to be
 loaded before others for some reason, well that can be achieved too. Use
@@ -116,7 +116,7 @@ loaded before others for some reason, well that can be achieved too. Use
 
 E.g to load in alphabetical order:
 #+BEGIN_SRC common-lisp
-  (load-plugins "plugins" :load-order-test #'string-lessp)
+  (load-plugins "./plugins" :load-order-test #'string-lessp)
 #+END_SRC
 Of course, for anything more complicated, asdf's system should be
 sufficient in dealing with conflicts (i.e requiring a plugin to be loaded
@@ -134,14 +134,14 @@ For instance, if the plugin =plugin= loads properly, the output would look like
 so
 #+BEGIN_SRC common-lisp
   1
-  (("plugin" . success))
+  (("plugin" . :success))
 #+END_SRC
 
 Or if it failed
 
 #+BEGIN_SRC common-lisp
   0
-  (("plugin" . error))
+  (("plugin" . :error))
 #+END_SRC
 
 Alternatively, by passing =:die-on-error= to =load-plugins=, if any error occurs
