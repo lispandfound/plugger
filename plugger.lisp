@@ -2,8 +2,6 @@
 
 (in-package #:plugger)
 (defparameter *plugger-hooks* nil)
-(defparameter *plugin-package* :plugger-plugins)
-(defparameter *api-package* :plugger-plugin-user)
 (defun reset-plugins ()
   (setf asdf:*central-registry* '(#P"/home/jake/quicklisp/quicklisp/")))
 ;;; "plugger" goes here. Hacks and glory await!
@@ -49,7 +47,7 @@
 (defmacro shadow-import-export (name package)
   `(progn
      (shadowing-import ',name ,package)
-     (export ',name ,*plugin-package*)))
+     (export ',name ,package)))
 (defmacro defun-for-package (package name args &body body)
   `(progn
      (defun ,name ,args
@@ -64,17 +62,22 @@
   `(progn
      (defparameter ,name ,value)
      (shadow-import-export ,package ,name)))
+
+(defmacro set-plugin-package (package)
+  `(defvar-for-package :plugger *plugin-package* ,package))
+(defmacro set-api-package (package)
+  `(defvar-for-package :plugger *api-package* ,package))
 (defmacro defplugfun (name args &body body)
-  `(defun-for-package ,*plugin-package* ,name ,args ,body))
+  `(defun-for-package ,*plugin-package* ,name ,args ,@body))
 
 (defmacro defplugmac (name args &body body)
-  `(defmacro-for-package ,*plugin-package* ,name ,args ,body))
+  `(defmacro-for-package ,*plugin-package* ,name ,args ,@body))
 (defmacro defplugvar (name value)
   `(defvar-for-package ,*plugin-package* ,name ,value))
 (defmacro defapifun (name args &body body)
-  `(defun-for-package ,*api-package* ,name ,args ,body))
+  `(defun-for-package ,*api-package* ,name ,args ,@body))
 (defmacro defapimac (name args &body body)
-  `(defmacro-for-package ,*plugin-package* ,name ,args ,body))
+  `(defmacro-for-package ,*api-package* ,name ,args ,@body))
 (defmacro defapivar (name value)
   `(defvar-for-package ,*api-package* ,name ,value))
 
