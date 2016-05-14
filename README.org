@@ -26,6 +26,13 @@ Then simply call:
   (ql:quickload :plugger)
 #+END_SRC
 ** Examples
+*** A note about setting api or plugin package names
+As of the most recent commit, setting the plugin or api package names has
+changed. Now dedicated macros are provided for you to achieve this,
+=set-api-package= and =set-plugin-package=. You need to set these packages *before*
+any code in any file related to plugger is loaded. If you use an asdf system,
+the best place for this is the package.lisp file, which is typically loaded
+before all other files.
 *** Plugin Writers
 To start with you'll need to locate the directory in which the plugins reside. this is
 defined by the host and should be documented. An example might be plugins.
