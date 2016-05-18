@@ -98,3 +98,8 @@
     (reset-plugins)
     (assert-equal 1 success )
     (assert-equal '(("plugin" . :success)) loaded )))
+(define-test detailed-error-test
+  (multiple-value-bind (success loaded) (load-plugins "./test_plugins/load-failure" :detailed-error t)
+    (reset-plugins)
+    (assert-equal 1 success )
+    (assert-equal 'asdf/find-system:load-system-definition-error (type-of (cdar loaded)))))
