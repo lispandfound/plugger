@@ -93,6 +93,13 @@
   (defplughook :test)
   (with-plug-hook 'test :test (lambda (n) (/ 1 n)))
   (assert-error 'division-by-zero (trigger-hook :test (0) :die-on-error t)))
+(define-test hook-test-error-inspection
+  (setq *plugger-hooks* nil)
+  (defplughook :test)
+  (with-plug-hook 'test :test (lambda (n) (/ 1 n)))
+  (multiple-value-bind (success loaded) (trigger-hook :test (0) :detailed-error t)
+    (declare (ignore success))
+    (assert-equal 'division-by-zero (type-of (cadr (car loaded))))))
 (define-test quicklisp-test
   (multiple-value-bind (success loaded) (load-plugins "./test_plugins/quicklisp-test" :use-quicklisp t)
     (reset-plugins)
