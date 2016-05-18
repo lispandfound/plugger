@@ -123,7 +123,7 @@ In order to load the plugins in foobar, you can use the =load-plugins= function.
 
 load-plugins:
 #+BEGIN_SRC common-lisp
-  (load-plugins directory &key included-plugins excluded-plugins load-order-test die-on-error plugin-namespace use-quicklisp)
+  (load-plugins directory &key included-plugins excluded-plugins load-order-test die-on-error plugin-namespace use-quicklisp detailed-error)
 #+END_SRC
 
 In our case, =load-plugins= can be used rather trivially:
@@ -163,6 +163,8 @@ Or if it failed
   0
   (("plugin" . :error))
 #+END_SRC
+If you pass =detailed-error= to the load-plugins function, then it will provide
+the exact error from loading the plugins.
 
 Alternatively, by passing =:die-on-error= to =load-plugins=, if any error occurs
 while loading a plugin the host program (that's you!) will die as well.
@@ -212,12 +214,12 @@ make code clearer. They're nothing special, simply wrappers around =assoc= etc.
 Of course, hooks aren't useful if you can't use them, you can trigger a hook
 using the =trigger-hook= function.
 #+BEGIN_SRC common-lisp
-(trigger-hook hook args &key excludes-functions includes-functions die-on-error)
+(trigger-hook hook args &key excludes-functions includes-functions die-on-error detailed-error)
 #+END_SRC
 After running =trigger-hook=, all hooks related to the hook you trigger will be
 run. Similar to =load-plugin=, =trigger-hook= returns the number of functions
 that ran successfully and a more in depth list of all the functions run with
-their respective statuses, as well as any return values.
+their respective statuses (again =detailed-error= returning the actual error object), as well as any return values.
 #+BEGIN_SRC common-lisp
   1
   ((func-1 success 1)
