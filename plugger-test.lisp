@@ -93,3 +93,8 @@
   (defplughook :test)
   (with-plug-hook 'test :test (lambda (n) (/ 1 n)))
   (assert-error 'error (trigger-hook :test (0) :die-on-error t)))
+(define-test quicklisp-test
+  (multiple-value-bind (success loaded) (load-plugins "./test_plugins/quicklisp-test" :use-quicklisp t)
+    (reset-plugins)
+    (assert-equal 1 success )
+    (assert-equal '(("plugin" . :success)) loaded )))
