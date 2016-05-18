@@ -27,7 +27,7 @@ Then simply call:
 #+END_SRC
 ** Examples
 *** A note about setting api or plugin package names
-As of the most recent commit, setting the plugin or api package names has
+As of some recent changes see (commit [[https://github.com/Triagle/plugger/commit/b9a5bdd8702c7bfe5387b3cf898ee52475fe3b22][b9a5bdd]]), setting the plugin or api package names has
 changed. Now dedicated macros are provided for you to achieve this,
 =set-api-package= and =set-plugin-package=. You need to set these packages *before*
 any code in any file related to plugger is loaded. If you use an asdf system,
@@ -35,7 +35,8 @@ the best place for this is the package.lisp file, which is typically loaded
 before all other files.
 *** Plugin Writers
 To start with you'll need to locate the directory in which the plugins reside. this is
-defined by the host and should be documented. An example might be plugins.
+defined by the host and should be documented. Imagine the following directory
+tree:
 
 - foobar
   - foo.lisp
@@ -60,37 +61,49 @@ plugin.asd
 #+END_SRC
 
 In order to actually use plugger you need to use two packages. these packages
-are =:plugger-plugins= and =:host-system-name-user= where =host-system-name= refers
-to the name of the host program (e.g my-super-cool-program-user).
+are =:plugger=, =host-system-name-plugins=, and =host-system-name-api=, where =host-system-name-*= refers
+to whatever the host program set these two packages to (e.g
+my-super-cool-program-plugins). Here is a breakdown of these packages:
+
+- :plugger :: this package contains the macros you'll likely use to define
+     functions, macros and variables with. It also contains the functions for
+     attaching to plugin hooks.
+- :host-system-name-plugin :: This package could be any name, like
+     =cool-prog-plugins= (for the exact package see the host program's
+     documentation). This package where you'll define macros, functions and
+     variables to.
+- :host-system-name-api :: This package could be any name, like
+     =cool-prog-api= (for the exact package see the host program's
+     documentation). This package where you'll find the host program's function,
+     macro and variable definitions. You'll most likely need this to have some kind of
+     interaction with the host program in general.
 
 package.lisp
 #+BEGIN_SRC common-lisp
   (defpackage my-package
-    (:use :cl :plugger-plugins :host-system-name-user))
+    (:use :cl :plugger :host-system-name-plugin :host-system-name-api))
 #+END_SRC
 
 As the plugins are simple asdf systems, you can make a plugin as big or complex
 as you want. However a few functions/macros should be of help to you if you want
 a plugin to be available to the user. Each of these macros are located under
-the =:plugger-plugins= package.
+the =:plugger= package.
 
-- =(defplugfun name (args) body)=
+- =(defplugfun name (args) body)= ::
   This is a wrapper around =defun= that automatically includes the function
   within a package available to the host system to use
-- =(defplugvar name value)=
+- =(defplugvar name value)= ::
   Identical to =defplugfun= except defines a parameter to be used by the host
   program rather than a function
-- =(defplugmac name (args) body)=
+- =(defplugmac name (args) body)= ::
   Identical to =defplugfun=, except it defines a macro
-- =(with-plug-hook callback-name hook-to-connect-to function)=
+- =(with-plug-hook callback-name hook-to-connect-to function)= ::
   A similar wrapper to =defplugfun= however this one runs on a hook defined by
   the host program e.g. when a user reload a page in a web server. =args= in
   this instance refers to the arguments passed by the host program to the
   plugin, such as the referral link from someone visiting your page in the case
   of a page load hook
 
-Additionally, exported symbols and functions from the host program may be found
-under =:host-system-name-user= or at the host program's discretion another package name.
 *** Host program
 Plugger attempts to make the host program's job to define a plugin as simple as
 possible. In order to do this, you'll ideally need only touch a few macros for
@@ -110,7 +123,7 @@ In order to load the plugins in foobar, you can use the =load-plugins= function.
 
 load-plugins:
 #+BEGIN_SRC common-lisp
-  (load-plugins directory &key included-plugins excluded-plugins load-order-test die-on-error plugin-namespace)
+  (load-plugins directory &key included-plugins excluded-plugins load-order-test die-on-error plugin-namespace use-quicklisp)
 #+END_SRC
 
 In our case, =load-plugins= can be used rather trivially:
@@ -158,7 +171,14 @@ Each plugin's symbols and functions it defines for you are found in
 =host-system-name-plugin=, or any other package's namespace by passing a value
 to =plugin-namespace=.
 #+BEGIN_SRC common-lisp
-  (load-plugins "plugins" :plugin-namespace :foobar-plugins)
+  (load-plugins "./plugins" :plugin-namespace :foobar-plugins)
+#+END_SRC
+External dependencies aren't handled automatically by load-plugins as a default.
+This is because it uses stock asdf for loading systems, which can't download
+dependencies. For that enable the =use-quicklisp= keyword to use quicklisp instead
+(which can download external packages).
+#+BEGIN_SRC common-lisp
+  (load-plugins "./plugins" :use-quicklisp t)
 #+END_SRC
 For unloading plugins, you may use =trigger-hook= with the hook argument =:unload=. Refer to =trigger-hook=
 **** Hooks
@@ -179,7 +199,7 @@ An example may include:
 associated functions =*plugger-hooks*=. In fact you can inspect at any time,
 it'll look something like the following:
 #+BEGIN_SRC common-lisp
-  ((:on-error . (func-1 func-2)))
+  ((:on-error . ((func-1 . #<FUNCTION-1>) (func-2 . #<FUNCTION-2>))))
 #+END_SRC
 However for readability enthusiasts, the following functions are defined to help
 make code clearer. They're nothing special, simply wrappers around =assoc= etc.
@@ -228,5 +248,4 @@ to do that with =defapifun=, =defapimac= and =defapivar=.
   Defines an api variable, that is added to =host-system-name= package.
 - =(defapimac name (args) body)=
   Defines an api macro, that is added to =host-system-name= package.
-You can of course set your own package to define api functions to by setting
-=*api-package*= variable.
+You can of course set your own package to define api functions to by using the =set-api-package= macro.
