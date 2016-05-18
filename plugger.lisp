@@ -10,11 +10,13 @@
 (defun defplughook (hook-name)
   "Define a plugin hook"
   (pushnew (list hook-name) *plugger-hooks*))
-(defmacro trigger-hook (hook-name (&rest args) &key (excludes-functions nil) (includes-functions :all) die-on-error)
+(defmacro trigger-hook (hook-name (&rest args) &key (excludes-functions nil) (includes-functions :all) die-on-error detailed-error)
   `(let ((results (mapcar (lambda (r) (handler-case (funcall (cdr r) ,@args)
                                    (error (&rest vars)  (if ,die-on-error
                                                             (error (type-of (car vars)) :text "Error Occurred" )
-                                                            (list (car r) :error nil)))
+                                                            (list (car r) (if ,detailed-error
+                                                                              (car vars)
+                                                                              :error) nil)))
                                         (:no-error (&rest return-values) (list (car r) :success return-values)))) (remove-if
                                                                                                                    (lambda (function)
                                                                                                                      (cond
