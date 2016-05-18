@@ -87,12 +87,12 @@
   (load-plugins "./test_plugins/import-test" :die-on-error t))
 (define-test error-test-and-die
   (reset-plugins)
-  (assert-error 'error (load-plugins "./test_plugins/load-failure" :die-on-error t)))
+  (assert-error 'asdf/find-system:load-system-definition-error (load-plugins "./test_plugins/load-failure" :die-on-error t)))
 (define-test hook-test-and-die
   (setq *plugger-hooks* nil)
   (defplughook :test)
   (with-plug-hook 'test :test (lambda (n) (/ 1 n)))
-  (assert-error 'error (trigger-hook :test (0) :die-on-error t)))
+  (assert-error 'division-by-zero (trigger-hook :test (0) :die-on-error t)))
 (define-test quicklisp-test
   (multiple-value-bind (success loaded) (load-plugins "./test_plugins/quicklisp-test" :use-quicklisp t)
     (reset-plugins)
