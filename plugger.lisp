@@ -25,7 +25,7 @@
                                                                                                                        ))
                                                                                                                    (cdr (assoc ,hook-name *plugger-hooks*)) :key #'car))))
      (values (length (remove-if (lambda (k) (eql k :error)) results :key #'cadr)) results)))
-(defun load-plugins (directory &key (included-plugins 'all) excluded-plugins (load-order-test #'string<) die-on-error (plugger-namespace :plugger-plugins))
+(defun load-plugins (directory &key (included-plugins 'all) excluded-plugins (load-order-test #'string<) die-on-error (plugger-namespace :plugger-plugins) use-quicklisp)
   (setf *plugin-package* plugger-namespace)
   (defplughook :unload)
   (defplughook :load)
@@ -36,7 +36,9 @@
                                         (pushnew path asdf:*central-registry*))
                                       (let* ((system (system-for-directory path)))
                                         (when (and (null (member system excluded-plugins :test #'equal)) (or (equal included-plugins 'all) (member system included-plugins :test #'equal)))
-                                          (handler-case (asdf:operate 'asdf:load-op system)
+                                          (handler-case (if use-quicklisp
+                                                            (ql:quickload system)
+                                                            (asdf:operate 'asdf:load-op system))
                                             (error (&rest vars) (declare (ignore vars)) (if die-on-error
                                                                                             (error 'error :text "load error")
                                                                                             (cons system :error)))
