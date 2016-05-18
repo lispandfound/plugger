@@ -25,7 +25,7 @@
                                                                                                                        ))
                                                                                                                    (cdr (assoc ,hook-name *plugger-hooks*)) :key #'car))))
      (values (length (remove-if (lambda (k) (eql k :error)) results :key #'cadr)) results)))
-(defun load-plugins (directory &key (included-plugins 'all) excluded-plugins (load-order-test #'string<) die-on-error (plugger-namespace 'none) use-quicklisp)
+(defun load-plugins (directory &key (included-plugins 'all) excluded-plugins (load-order-test #'string<) die-on-error (plugger-namespace 'none) use-quicklisp detailed-error)
   (when (not (equal plugger-namespace 'none))
     (set-plugin-package plugger-namespace))
   (defplughook :unload)
@@ -40,9 +40,12 @@
                                           (handler-case (if use-quicklisp
                                                             (ql:quickload system)
                                                             (asdf:operate 'asdf:load-op system))
-                                            (error (&rest vars) (declare (ignore vars)) (if die-on-error
-                                                                                            (error 'error :text "load error")
-                                                                                            (cons system :error)))
+                                            (error (&rest vars)  (if die-on-error
+                                                                     (progn
+                                                                       (error 'error :text "load error"))
+                                                                     (cons system (if detailed-error
+                                                                                      (car vars)
+                                                                                      :error))))
                                             (:no-error (&rest vars) (declare (ignore vars)) (cons system :success)))))))
                                   (sort (cl-fad:list-directory dir) load-order-test :key #'system-for-directory))))
 
