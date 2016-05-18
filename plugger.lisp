@@ -12,9 +12,9 @@
   (pushnew (list hook-name) *plugger-hooks*))
 (defmacro trigger-hook (hook-name (&rest args) &key (excludes-functions nil) (includes-functions :all) die-on-error)
   `(let ((results (mapcar (lambda (r) (handler-case (funcall (cdr r) ,@args)
-                                   (error (&rest vars) (declare (ignore vars)) (if ,die-on-error
-                                                                                   (error 'error :text "Error Occurred" )
-                                                                                   (list (car r) :error nil)))
+                                   (error (&rest vars)  (if ,die-on-error
+                                                            (error (type-of (car vars)) :text "Error Occurred" )
+                                                            (list (car r) :error nil)))
                                         (:no-error (&rest return-values) (list (car r) :success return-values)))) (remove-if
                                                                                                                    (lambda (function)
                                                                                                                      (cond
@@ -42,7 +42,7 @@
                                                             (asdf:operate 'asdf:load-op system))
                                             (error (&rest vars)  (if die-on-error
                                                                      (progn
-                                                                       (error 'error :text "load error"))
+                                                                       (error (type-of (car vars)) :text "load error"))
                                                                      (cons system (if detailed-error
                                                                                       (car vars)
                                                                                       :error))))
