@@ -22,7 +22,7 @@
                                                                                                                      (cond
                                                                                                                        ((null ,includes-functions) t)
                                                                                                                        ((and (null ,excludes-functions) (equal ,includes-functions :all)) nil)
-                                                                                                                       ((and (not (null ,includes-functions)) (not (equal ,includes-functions :all))) (not (member function ,includes-functions)))
+                                                                                                                       ((not (equal ,includes-functions :all)) (not (member function ,includes-functions)))
                                                                                                                        (t (member function ,excludes-functions))
                                                                                                                        ))
                                                                                                                    (cdr (assoc ,hook-name *plugger-hooks*)) :key #'car))))
