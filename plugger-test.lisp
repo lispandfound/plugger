@@ -2,27 +2,22 @@
 
 (define-test included-plugins-test
   (multiple-value-bind (success loaded) (load-plugins "./test_plugins/load" :included-plugins nil)
-    (reset-plugins)
     (assert-equal 0 success)
     (assert-equal nil loaded)))
 (define-test excluded-plugins-test
   (multiple-value-bind (success loaded) (load-plugins "./test_plugins/load" :excluded-plugins '("plugin"))
-    (reset-plugins)
     (assert-equal 0 success )
     (assert-equal nil loaded )))
 (define-test basic-load-test
   (multiple-value-bind (success loaded) (load-plugins "./test_plugins/load")
-    (reset-plugins)
     (assert-equal 1 success )
     (assert-equal '(("plugin" . :success)) loaded ) ))
 (define-test error-test
   (multiple-value-bind (success loaded) (load-plugins "./test_plugins/load-failure")
-    (reset-plugins)
     (assert-equal 0 success)
     (assert-equal '(("plugin" . :error)) loaded )))
 (define-test load-order-test
   (multiple-value-bind (success loaded) (load-plugins "./test_plugins/load-order" :load-order-test #'string>)
-    (reset-plugins)
     (assert-equal 2 success )
     (assert-equal '(("b" . :success)
                     ("a" . :success)) loaded )))
@@ -83,10 +78,8 @@
   (with-plug-hook 'test :test #'test-hook-function)
   (assert-equal '(:test) (hook-for-function 'test)))
 (define-test plugin-import-test
-  (reset-plugins)
   (load-plugins "./test_plugins/import-test" :die-on-error t))
 (define-test error-test-and-die
-  (reset-plugins)
   (assert-error 'asdf/find-system:load-system-definition-error (load-plugins "./test_plugins/load-failure" :die-on-error t)))
 (define-test hook-test-and-die
   (setq *plugger-hooks* nil)
@@ -102,11 +95,9 @@
     (assert-equal 'division-by-zero (type-of (cadr (car loaded))))))
 (define-test quicklisp-test
   (multiple-value-bind (success loaded) (load-plugins "./test_plugins/quicklisp-test" :use-quicklisp t)
-    (reset-plugins)
     (assert-equal 1 success )
     (assert-equal '(("plugin" . :success)) loaded )))
 (define-test detailed-error-test
   (multiple-value-bind (success loaded) (load-plugins "./test_plugins/load-failure" :detailed-error t)
-    (reset-plugins)
     (assert-equal 1 success )
     (assert-equal 'asdf/find-system:load-system-definition-error (type-of (cdar loaded)))))
