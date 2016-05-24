@@ -2,8 +2,7 @@
 
 (in-package #:plugger)
 (defparameter *plugger-hooks* nil)
-(defun reset-plugins ()
-  (setf asdf:*central-registry* '(#P"/home/jake/quicklisp/quicklisp/")))
+
 ;;; "plugger" goes here. Hacks and glory await!
 (defun system-for-directory (directory)
   (car (last (pathname-directory directory))))
@@ -35,9 +34,8 @@
   (let ((dir (pathname directory)))
     (let ((loaded-plugins (mapcar (lambda (path)
                                     (when (cl-fad:directory-pathname-p path)
-                                      (when (null (member path asdf:*central-registry* :test #'equal))
-                                        (pushnew path asdf:*central-registry*))
-                                      (let* ((system (system-for-directory path)))
+                                      (let* ((asdf:*central-registry* (cons path asdf:*central-registry*))
+                                              (system (system-for-directory path)))
                                         (when (and (null (member system excluded-plugins :test #'equal)) (or (equal included-plugins 'all) (member system included-plugins :test #'equal)))
                                           (handler-case (if use-quicklisp
                                                             (ql:quickload system)
